@@ -16,14 +16,17 @@ const PDFDocument = require("pdfkit");
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+app.use(cors({
+  origin: "*"
+}));
 
 if (!process.env.MONGO_URI) {
   console.log("MONGO_URI missing");
   process.exit(1);
 }
 
-console.log("URI:", process.env.MONGO_URI); // 👈 ADD THIS (for debug)
+console.log("URI:", process.env.MONGO_URI); 
 
 mongoose.connect(process.env.MONGO_URI, {
   family: 4   
@@ -218,7 +221,6 @@ app.post("/order", async (req, res) => {
     let totalAmount = 0;
     let productDetails = [];
 
-    // ✅ FETCH PRODUCTS FIRST (FIX)
     for (let item of items) {
       const product = await ProductModel.findById(item.productId);
 
@@ -238,7 +240,7 @@ app.post("/order", async (req, res) => {
       });
     }
 
-    // ✅ SAVE ORDER
+    
     const order = new Order({
       fullName,
       email,
@@ -258,9 +260,6 @@ app.post("/order", async (req, res) => {
 
     console.log("ORDER SAVED:", savedOrder._id);
 
-    // ===============================
-    // 🔥 CREATE PDF
-    // ===============================
     const doc = new PDFDocument();
     let buffers = [];
 
@@ -284,9 +283,6 @@ app.post("/order", async (req, res) => {
       }
     });
 
-    // ===============================
-    // 📄 PDF CONTENT
-    // ===============================
     doc.fontSize(20).text("GST INVOICE", { align: "center" });
     doc.moveDown();
 
@@ -301,7 +297,7 @@ app.post("/order", async (req, res) => {
 
     let total = 0;
 
-    // ✅ USE PRE-FETCHED DATA (FIX)
+
     productDetails.forEach((item, i) => {
       total += item.total;
 
@@ -319,10 +315,9 @@ app.post("/order", async (req, res) => {
     doc.text(`GST (18%): ₹${gst.toFixed(2)}`);
     doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`);
 
-    // 🔥 MUST
+    
     doc.end();
 
-    // ✅ RESPONSE
     res.json({
       orderId: savedOrder._id
     });
