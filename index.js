@@ -259,7 +259,7 @@ app.post("/order", async (req, res) => {
       const pdfBuffer = Buffer.concat(buffers);
 
 console.log("PDF SIZE:", pdfBuffer.length);
-      const pdfBuffer = Buffer.concat(buffers);
+      
 
       await sendMail(
   email,
