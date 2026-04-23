@@ -284,28 +284,35 @@ doc.text(`${address}, ${city}, ${state} - ${pincode}`);
 
 doc.moveDown();
 
-const tableTop = doc.y;
-const itemX = 40;
-const qtyX = 250;
-const priceX = 320;
-const totalX = 400;
+const table = {
+  headers: ["Item", "Qty", "Price", "Total"],
+  rows: productDetails.map((item) => [
+    item.name,
+    item.quantity,
+    ` Rs ${item.price}`,
+    `Rs ${item.total}`
+  ])
+};
+
+let startY = doc.y;
+
+const colWidths = [200, 80, 100, 100];
 
 doc.font("Helvetica-Bold");
-doc.text("Item", itemX, tableTop);
-doc.text("Qty", qtyX, tableTop);
-doc.text("Price", priceX, tableTop);
-doc.text("Total", totalX, tableTop);
+
+table.headers.forEach((header, i) => {
+  doc.text(header, 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY);
+});
 
 doc.moveDown();
 doc.font("Helvetica");
 
 let y = doc.y;
 
-productDetails.forEach((item) => {
-  doc.text(item.name, itemX, y);
-  doc.text(item.quantity, qtyX, y);
-  doc.text(`Rs ${item.price}`, priceX, y);
-  doc.text(`Rs ${item.total}`, totalX, y);
+table.rows.forEach((row) => {
+  row.forEach((cell, i) => {
+    doc.text(cell, 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y);
+  });
   y += 20;
 });
 
@@ -323,7 +330,6 @@ doc.moveDown();
 doc.text("Thank you for Shopping With Us!", { align: "center" });
 
 doc.end();
-
     res.json({
       orderId: savedOrder._id
     });
