@@ -297,23 +297,23 @@ app.post("/order", async (req, res) => {
 
     let total = 0;
 
-
     productDetails.forEach((item, i) => {
       total += item.total;
 
       doc.text(
-        `${i + 1}. ${item.name} - ₹${item.price} x ${item.quantity} = ₹${item.total}`
+    `${i + 1}. ${item.name} - ₹${item.price} x ${item.quantity} = ₹${item.total}`
       );
     });
 
-    doc.moveDown();
+       doc.moveDown();
 
     const gst = total * 0.18;
     const grandTotal = total + gst;
 
-    doc.text(`Total: ₹${total}`);
-    doc.text(`GST (18%): ₹${gst.toFixed(2)}`);
-    doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`);
+
+      doc.text(`Total: Rs ${total}`);
+    doc.text(`GST (18%): Rs ${gst.toFixed(2)}`);
+    doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`);
 
     
     doc.end();
@@ -415,7 +415,7 @@ app.delete("/order/:id", async (req, res) => {
     }
     res.json({ message: "Order deleted successfully" });
   } catch (err) {
-    console.log("DELETE ERROR:", err);
+     console.log("DELETE ERROR:", err);
     res.status(500).json({ message: "Delete failed" });
   }
 });
@@ -573,6 +573,6 @@ app.get("/users",async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log("Server running on port 3001");
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });
