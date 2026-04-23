@@ -301,7 +301,7 @@ app.post("/order", async (req, res) => {
       total += item.total;
 
       doc.text(
-    `${i + 1}. ${item.name} - ₹${item.price} x ${item.quantity} = ₹${item.total}`
+    `${i + 1}. ${item.name} - ${item.price} x ${item.quantity} = Rs${item.total}`
       );
     });
 
