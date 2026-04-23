@@ -22,7 +22,7 @@ app.use(cors({
 }));
 
 if (!process.env.MONGO_URI) {
-  console.log("MONGO_URI missing");
+ 
   process.exit(1);
 }
 
@@ -32,7 +32,7 @@ mongoose.connect(process.env.MONGO_URI, {
   family: 4   
 })
 .then(() => console.log("MongoDB Atlas connected"))
-.catch(err => console.log("DB ERROR:", err));
+.catch(err => console.log("DataBase ERROR:", err));
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -64,7 +64,7 @@ app.post("/login", async (req, res) => {
       await user.save();
     }
 
-    console.log("OTP SENT:", otp); 
+    console.log("OTP Sent:", otp); 
 
        await sendMail(
       email,
@@ -74,7 +74,7 @@ app.post("/login", async (req, res) => {
     res.json({ message: "OTP sent" });
 
   } catch (err) {
-    console.log("LOGIN ERROR:", err);
+    console.log("Login ERROR:", err);
     res.status(500).json({ message: "Login error" });
   }
 });
@@ -211,8 +211,7 @@ app.post("/order", async (req, res) => {
       items
     } = req.body;
 
-    console.log("ORDER API HIT");
-    console.log("ITEMS RECEIVED:", items);
+  
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items" });
@@ -268,7 +267,7 @@ app.post("/order", async (req, res) => {
     doc.on("end", async () => {
       const pdfBuffer = Buffer.concat(buffers);
 
-      console.log("PDF READY");
+      
       console.log("PDF SIZE:", pdfBuffer.length);
 
       try {
@@ -301,7 +300,7 @@ app.post("/order", async (req, res) => {
       total += item.total;
 
       doc.text(
-    `${i + 1}. ${item.name} - ${item.price} x ${item.quantity} = Rs${item.total}`
+    `${i + 1}. ${item.name} - ${item.price} x ${item.quantity} = ${item.total}`
       );
     });
 
@@ -329,7 +328,7 @@ app.post("/order", async (req, res) => {
 });
 app.get("/orders", async (req, res) => {
   try {
-    console.log("Fetching orders...");
+   
 
     const orders = await Order.find().populate("items.productId");
 
@@ -469,7 +468,7 @@ app.get("/search", async (req, res) => {
     res.json(products);
 
   } catch (err) {
-     console.log("SEARCH ERROR:", err);
+    
     res.status(500).json({ message: "Search failed" });
   }
 });
@@ -484,7 +483,7 @@ app.get("/product/:id", async (req, res) => {
 
     res.json(product);
   } catch (err) {
-    console.log("PRODUCT ERROR:", err);
+  
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -492,7 +491,7 @@ app.post("/cart", async (req, res) => {
   try {
     const { productId } = req.body;
 
-    console.log("ADDING PRODUCT:", productId);
+    console.log("Adding Product:", productId);
     let cart = await CartModel.findOne();
 
     if (!cart) {
@@ -534,7 +533,7 @@ app.get("/cart", async (req, res) => {
     res.json(cart);
 
   } catch (error) {
-      console.log("FETCH ERROR:", error);
+     
     res.status(500).json({ error: "Error fetching cart" });
   }
 });
@@ -558,7 +557,7 @@ app.delete("/cart/:productId", async (req, res) => {
     res.json({message: "Item removed successfully" });
 
   } catch (err) {
-     console.log("DELETE ERROR:", err);
+   
     res.status(500).json({ message: "Delete failed" });
   }
 });
