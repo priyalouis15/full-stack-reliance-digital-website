@@ -196,6 +196,7 @@ app.post("/verify-payment", async (req, res) => {
 
 
 
+
 app.post("/order", async (req, res) => {
   try {
 
@@ -211,8 +212,6 @@ app.post("/order", async (req, res) => {
       items
     } = req.body;
 
-  
-
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items" });
     }
@@ -223,12 +222,7 @@ app.post("/order", async (req, res) => {
     for (let item of items) {
       const product = await ProductModel.findById(item.productId);
 
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
       const itemTotal = product.price * item.quantity;
-
       totalAmount += itemTotal;
 
       productDetails.push({
@@ -239,7 +233,6 @@ app.post("/order", async (req, res) => {
       });
     }
 
-    
     const order = new Order({
       fullName,
       email,
@@ -257,64 +250,58 @@ app.post("/order", async (req, res) => {
 
     const savedOrder = await order.save();
 
-    console.log("ORDER SAVED:", savedOrder._id);
-
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 40 });
     let buffers = [];
 
-    doc.on("data", buffers.push.bind(buffers));
+    doc.on("data", (chunk) => buffers.push(chunk));
 
     doc.on("end", async () => {
       const pdfBuffer = Buffer.concat(buffers);
 
-      
-      console.log("PDF SIZE:", pdfBuffer.length);
-
-      try {
-        await sendMail(
-          email,
-          "GST Invoice",
-          `<h3>Order placed successfully</h3><p>Invoice attached</p>`,
-          pdfBuffer
-        );
-      } catch (err) {
-        console.log("MAIL ERROR:", err.message);
-      }
+      await sendMail(email, pdfBuffer);
     });
 
-    doc.fontSize(20).text("GST INVOICE", { align: "center" });
+    doc.fontSize(18).text("INVOICE", { align: "center" });
     doc.moveDown();
 
+    doc.fontSize(10);
+    doc.text(`Invoice #: INV-${savedOrder._id}`);
     doc.text(`Order ID: ${savedOrder._id}`);
-    doc.text(`Name: ${fullName}`);
-    doc.text(`Email: ${email}`);
-    doc.text(`Phone: ${phone}`);
-    doc.text(`Address: ${address}, ${city}, ${state} - ${pincode}`);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.text(`Payment: ${payment}`);
+    doc.text(`Status: ${order.orderStatus}`);
+
+    doc.moveDown();
+
+    doc.text("Billed To:");
+    doc.text(fullName);
+    doc.text(email);
+    doc.text(`${address}, ${city}, ${state} - ${pincode}`);
+
     doc.moveDown();
 
     doc.text("Items:");
-
-    let total = 0;
+    doc.moveDown();
 
     productDetails.forEach((item, i) => {
-      total += item.total;
-
       doc.text(
-    `${i + 1}. ${item.name} - ${item.price} x ${item.quantity} = ${item.total}`
+        `${i + 1}. ${item.name} | Qty: ${item.quantity} | ₹${item.price} = ₹${item.total}`
       );
     });
 
-       doc.moveDown();
+    doc.moveDown();
 
-    const gst = total * 0.18;
-    const grandTotal = total + gst;
+    const gst = totalAmount * 0.18;
+    const grandTotal = totalAmount + gst;
 
+    doc.text(`Subtotal: ₹${totalAmount}`);
+    doc.text(`GST (18%): ₹${gst.toFixed(2)}`);
+    doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`);
 
-      doc.text(`Total: Rs ${total}`);
-    doc.text(`GST (18%): Rs ${gst.toFixed(2)}`);
-    doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`);
+    doc.moveDown();
 
-    
+    doc.text("Thank you for your order!", { align: "center" });
+
     doc.end();
 
     res.json({
