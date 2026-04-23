@@ -249,68 +249,80 @@ app.post("/order", async (req, res) => {
     });
 
     const savedOrder = await order.save();
+const doc = new PDFDocument({ margin: 40 });
+let buffers = [];
 
-    const doc = new PDFDocument({ margin: 40 });
-    let buffers = [];
+doc.on("data", (chunk) => buffers.push(chunk));
 
-    doc.on("data", (chunk) => buffers.push(chunk));
+doc.on("end", async () => {
+  const pdfBuffer = Buffer.concat(buffers);
 
-    doc.on("end", async () => {
-      const pdfBuffer = Buffer.concat(buffers);
+  await sendMail(
+    email,
+    "Invoice",
+    "<h3>Your invoice is attached</h3>",
+    pdfBuffer
+  );
+});
 
-console.log("PDF SIZE:", pdfBuffer.length);
-      
+doc.fontSize(18).text("INVOICE", { align: "center" });
+doc.moveDown();
 
-      await sendMail(
-  email,
-  "Invoice",
-  "<h3>Your invoice is attached</h3>",
-  pdfBuffer
-);
-    });
+doc.fontSize(10);
+doc.text(`Invoice #: INV-${savedOrder._id}`);
+doc.text(`Order ID: ${savedOrder._id}`);
+doc.text(`Date: ${new Date().toLocaleDateString()}`);
+doc.text(`Payment: ${payment}`);
+doc.text(`Status: ${order.orderStatus}`);
 
-    doc.fontSize(18).text("INVOICE", { align: "center" });
-    doc.moveDown();
+doc.moveDown();
 
-    doc.fontSize(10);
-    doc.text(`Invoice #: INV-${savedOrder._id}`);
-    doc.text(`Order ID: ${savedOrder._id}`);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`);
-    doc.text(`Payment: ${payment}`);
-    doc.text(`Status: ${order.orderStatus}`);
+doc.text("Billed To:");
+doc.text(fullName);
+doc.text(email);
+doc.text(`${address}, ${city}, ${state} - ${pincode}`);
 
-    doc.moveDown();
+doc.moveDown();
 
-    doc.text("Billed To:");
-    doc.text(fullName);
-    doc.text(email);
-    doc.text(`${address}, ${city}, ${state} - ${pincode}`);
+const tableTop = doc.y;
+const itemX = 40;
+const qtyX = 250;
+const priceX = 320;
+const totalX = 400;
 
-    doc.moveDown();
+doc.font("Helvetica-Bold");
+doc.text("Item", itemX, tableTop);
+doc.text("Qty", qtyX, tableTop);
+doc.text("Price", priceX, tableTop);
+doc.text("Total", totalX, tableTop);
 
-    doc.text("Items:");
-    doc.moveDown();
+doc.moveDown();
+doc.font("Helvetica");
 
-    productDetails.forEach((item, i) => {
-      doc.text(
-        `${i + 1}. ${item.name} | Qty: ${item.quantity} | ₹${item.price} = Rs:${item.total}`
-      );
-    });
+let y = doc.y;
 
-    doc.moveDown();
+productDetails.forEach((item) => {
+  doc.text(item.name, itemX, y);
+  doc.text(item.quantity, qtyX, y);
+  doc.text(`₹${item.price}`, priceX, y);
+  doc.text(`₹${item.total}`, totalX, y);
+  y += 20;
+});
 
-    const gst = totalAmount * 0.18;
-    const grandTotal = totalAmount + gst;
+doc.moveDown();
 
-    doc.text(`Subtotal: Rs ${totalAmount}`);
-    doc.text(`GST (18%): Rs ${gst.toFixed(2)}`);
-    doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`);
+const gst = totalAmount * 0.18;
+const grandTotal = totalAmount + gst;
 
-    doc.moveDown();
+doc.text(`Subtotal: ₹${totalAmount}`, { align: "right" });
+doc.text(`GST (18%): ₹${gst.toFixed(2)}`, { align: "right" });
+doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`, { align: "right" });
 
-    doc.text("Thank you for your order!", { align: "center" });
+doc.moveDown();
 
-    doc.end();
+doc.text("Thank you for your order!", { align: "center" });
+
+doc.end();
 
     res.json({
       orderId: savedOrder._id
