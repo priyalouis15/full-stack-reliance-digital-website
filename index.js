@@ -258,7 +258,15 @@ app.post("/order", async (req, res) => {
     doc.on("end", async () => {
       const pdfBuffer = Buffer.concat(buffers);
 
-      await sendMail(email, pdfBuffer);
+console.log("PDF SIZE:", pdfBuffer.length);
+      const pdfBuffer = Buffer.concat(buffers);
+
+      await sendMail(
+  email,
+  "Invoice",
+  "<h3>Your invoice is attached</h3>",
+  pdfBuffer
+);
     });
 
     doc.fontSize(18).text("INVOICE", { align: "center" });
@@ -285,7 +293,7 @@ app.post("/order", async (req, res) => {
 
     productDetails.forEach((item, i) => {
       doc.text(
-        `${i + 1}. ${item.name} | Qty: ${item.quantity} | ₹${item.price} = ₹${item.total}`
+        `${i + 1}. ${item.name} | Qty: ${item.quantity} | ₹${item.price} = Rs:${item.total}`
       );
     });
 
@@ -294,9 +302,9 @@ app.post("/order", async (req, res) => {
     const gst = totalAmount * 0.18;
     const grandTotal = totalAmount + gst;
 
-    doc.text(`Subtotal: ₹${totalAmount}`);
-    doc.text(`GST (18%): ₹${gst.toFixed(2)}`);
-    doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`);
+    doc.text(`Subtotal: Rs ${totalAmount}`);
+    doc.text(`GST (18%): Rs ${gst.toFixed(2)}`);
+    doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`);
 
     doc.moveDown();
 
