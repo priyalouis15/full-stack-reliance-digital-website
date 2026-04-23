@@ -304,8 +304,8 @@ let y = doc.y;
 productDetails.forEach((item) => {
   doc.text(item.name, itemX, y);
   doc.text(item.quantity, qtyX, y);
-  doc.text(`₹${item.price}`, priceX, y);
-  doc.text(`₹${item.total}`, totalX, y);
+  doc.text(`Rs ${item.price}`, priceX, y);
+  doc.text(`Rs ${item.total}`, totalX, y);
   y += 20;
 });
 
@@ -314,13 +314,13 @@ doc.moveDown();
 const gst = totalAmount * 0.18;
 const grandTotal = totalAmount + gst;
 
-doc.text(`Subtotal: ₹${totalAmount}`, { align: "right" });
-doc.text(`GST (18%): ₹${gst.toFixed(2)}`, { align: "right" });
-doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`, { align: "right" });
+doc.text(`Subtotal: Rs ${totalAmount}`, { align: "right" });
+doc.text(`GST (18%): Rs ${gst.toFixed(2)}`, { align: "right" });
+doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`, { align: "right" });
 
 doc.moveDown();
 
-doc.text("Thank you for your order!", { align: "center" });
+doc.text("Thank you for Shopping With Us!", { align: "center" });
 
 doc.end();
 
