@@ -254,11 +254,11 @@ const doc = new PDFDocument({ size: "A4", margin: 50 });
 let buffers = [];
 doc.on("data", (chunk) => buffers.push(chunk));
 
-doc.fontSize(16).text("Reliance Digital", 50, 50);
-doc.fontSize(10).text("Mangalore, India");
-doc.text("Email: relianceDigital@gmail.com");
+doc.fontSize(16).text("My Store Pvt Ltd", 50, 50);
+doc.fontSize(10).text("Mangalore, Karnataka, India");
+doc.text("Email: support@mystore.com");
 
-doc.fontSize(14).text("OFFICIAL RECEIPT", 400, 50);
+doc.fontSize(14).text("TAX INVOICE", 400, 50);
 
 doc.moveDown(3);
 
@@ -279,75 +279,76 @@ const tableTop = 240;
 doc.moveTo(50, tableTop).lineTo(550, tableTop).stroke();
 
 doc.text("Item", 50, tableTop + 5);
-doc.text("Qty", 250, tableTop + 5, { width: 40, align: "right" });
-doc.text("Price", 300, tableTop + 5, { width: 60, align: "right" });
-doc.text("CGST", 370, tableTop + 5, { width: 60, align: "right" });
-doc.text("SGST", 430, tableTop + 5, { width: 60, align: "right" });
+doc.text("Qty", 200, tableTop + 5, { width: 40, align: "right" });
+doc.text("Price", 250, tableTop + 5, { width: 60, align: "right" });
+doc.text("Base", 320, tableTop + 5, { width: 60, align: "right" });
+doc.text("CGST", 380, tableTop + 5, { width: 60, align: "right" });
+doc.text("SGST", 440, tableTop + 5, { width: 60, align: "right" });
 doc.text("Total", 500, tableTop + 5, { width: 60, align: "right" });
 
 doc.moveTo(50, tableTop + 20).lineTo(550, tableTop + 20).stroke();
 
 let y = tableTop + 30;
-let subtotal = 0;
+let taxableSubtotal = 0;
+let totalGST = 0;
 
 productDetails.forEach((item) => {
   const total = item.price * item.quantity;
-  const cgst = total * 0.09;
-  const sgst = total * 0.09;
 
-  subtotal += total;
+  const base = total / 1.18;
+  const gst = total - base;
 
-  doc.text(item.name, 50, y, { width: 180 });
+  const cgst = gst / 2;
+  const sgst = gst / 2;
 
-  doc.text(item.quantity.toString(), 250, y, { width: 40, align: "right" });
-  doc.text(`Rs ${item.price.toFixed(2)}`, 300, y, { width: 60, align: "right" });
-  doc.text(`Rs ${cgst.toFixed(2)}`, 370, y, { width: 60, align: "right" });
-  doc.text(`Rs ${sgst.toFixed(2)}`, 430, y, { width: 60, align: "right" });
-  doc.text(`Rs ${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+  taxableSubtotal += base;
+  totalGST += gst;
 
-  y += 20;
+  doc.text(item.name, 50, y, { width: 140 });
+
+  doc.text(item.quantity.toString(), 200, y, { width: 40, align: "right" });
+  doc.text(`₹${item.price.toFixed(2)}`, 250, y, { width: 60, align: "right" });
+  doc.text(`${base.toFixed(2)}`, 320, y, { width: 60, align: "right" });
+  doc.text(`${cgst.toFixed(2)}`, 380, y, { width: 60, align: "right" });
+  doc.text(`${sgst.toFixed(2)}`, 440, y, { width: 60, align: "right" });
+  doc.text(`₹${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+
+  y += 25;
 });
 
 doc.moveTo(50, y).lineTo(550, y).stroke();
 
-const totalTax = subtotal * 0.18;
-const grandTotal = subtotal + totalTax;
-
 y += 20;
 
-doc.text("Subtotal:", 350, y);
-doc.text(`Rs ${subtotal.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+const grandTotal = taxableSubtotal + totalGST;
 
-doc.text("GST (18%):", 350, y + 15);
-doc.text(`Rs ${totalTax.toFixed(2)}`, 500, y + 15, { width: 60, align: "right" });
+doc.text("Taxable Subtotal:", 350, y);
+doc.text(`${taxableSubtotal.toFixed(2)}`, 500, y, { align: "right" });
+
+doc.text("Total GST (18%):", 350, y + 15);
+doc.text(`${totalGST.toFixed(2)}`, 500, y + 15, { align: "right" });
 
 doc.text("Shipping:", 350, y + 30);
-doc.text("FREE", 500, y + 30, { width: 60, align: "right" });
+doc.text("FREE", 500, y + 30, { align: "right" });
 
 doc.text("Grand Total:", 350, y + 50);
-doc.text(` Rs ${grandTotal.toFixed(2)}`, 500, y + 50, { width: 60, align: "right" });
+doc.text(`₹${grandTotal.toFixed(2)}`, 500, y + 50, { align: "right" });
 
 doc.text("Thank you for shopping with us!", 50, 750, {
   align: "center"
 });
 
 doc.on("end", async () => {
-  try {
-    const pdfBuffer = Buffer.concat(buffers);
+  const pdfBuffer = Buffer.concat(buffers);
 
-    await sendMail(
-      email,
-      "Invoice - Order Confirmation",
-      `<h3>Your order is confirmed</h3>
-       <p>Order ID: ${savedOrder._id}</p>
-       <p>Total: Rs ${grandTotal.toFixed(2)}</p>`,
-      pdfBuffer
-    );
-
-    console.log("Invoice mail sent");
-  } catch (err) {
-    console.log("Mail error:", err);
-  }
+  await sendMail(
+    email,
+    "GST Invoice",
+    `<h3>Your order invoice</h3>
+     <p>Order ID: ${savedOrder._id}</p>
+     <p>Total: ₹${grandTotal.toFixed(2)}</p>`,
+    pdfBuffer
+  );
 });
 
 doc.end();
