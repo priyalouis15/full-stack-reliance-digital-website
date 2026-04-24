@@ -254,9 +254,9 @@ const doc = new PDFDocument({ size: "A4", margin: 50 });
 let buffers = [];
 doc.on("data", (chunk) => buffers.push(chunk));
 
-doc.fontSize(16).text("My Store Pvt Ltd", 50, 50);
+doc.fontSize(16).text("Reliance Digital", 50, 50);
 doc.fontSize(10).text("Mangalore, Karnataka, India");
-doc.text("Email: support@mystore.com");
+doc.text("Email: RelianceDigital@gmail.com");
 
 doc.fontSize(14).text("TAX INVOICE", 400, 50);
 
@@ -307,11 +307,11 @@ productDetails.forEach((item) => {
   doc.text(item.name, 50, y, { width: 140 });
 
   doc.text(item.quantity.toString(), 200, y, { width: 40, align: "right" });
-  doc.text(`₹${item.price.toFixed(2)}`, 250, y, { width: 60, align: "right" });
+  doc.text(`Rs ${item.price.toFixed(2)}`, 250, y, { width: 60, align: "right" });
   doc.text(`${base.toFixed(2)}`, 320, y, { width: 60, align: "right" });
   doc.text(`${cgst.toFixed(2)}`, 380, y, { width: 60, align: "right" });
   doc.text(`${sgst.toFixed(2)}`, 440, y, { width: 60, align: "right" });
-  doc.text(`₹${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+  doc.text(`Rs ${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
 
   y += 25;
 });
@@ -332,7 +332,7 @@ doc.text("Shipping:", 350, y + 30);
 doc.text("FREE", 500, y + 30, { align: "right" });
 
 doc.text("Grand Total:", 350, y + 50);
-doc.text(`₹${grandTotal.toFixed(2)}`, 500, y + 50, { align: "right" });
+doc.text(`Rs ${grandTotal.toFixed(2)}`, 500, y + 50, { align: "right" });
 
 doc.text("Thank you for shopping with us!", 50, 750, {
   align: "center"
@@ -346,7 +346,7 @@ doc.on("end", async () => {
     "GST Invoice",
     `<h3>Your order invoice</h3>
      <p>Order ID: ${savedOrder._id}</p>
-     <p>Total: ₹${grandTotal.toFixed(2)}</p>`,
+     <p>Total: Rs ${grandTotal.toFixed(2)}</p>`,
     pdfBuffer
   );
 });
