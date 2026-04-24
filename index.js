@@ -249,85 +249,106 @@ app.post("/order", async (req, res) => {
     });
 
     const savedOrder = await order.save();
-const doc = new PDFDocument({ margin: 40 });
-let buffers = [];
+const doc = new PDFDocument({ size: "A4", margin: 50 });
 
+let buffers = [];
 doc.on("data", (chunk) => buffers.push(chunk));
 
-doc.on("end", async () => {
-  const pdfBuffer = Buffer.concat(buffers);
+doc.fontSize(16).text("Reliance Digital", 50, 50);
+doc.fontSize(10).text("Mangalore, India");
+doc.text("Email: relianceDigital@gmail.com");
 
-  await sendMail(
-    email,
-    "Invoice",
-    "<h3>Your invoice is attached</h3>",
-    pdfBuffer
-  );
-});
+doc.fontSize(14).text("OFFICIAL RECEIPT", 400, 50);
 
-doc.fontSize(18).text("INVOICE", { align: "center" });
-doc.moveDown();
+doc.moveDown(3);
 
 doc.fontSize(10);
-doc.text(`Invoice #: INV-${savedOrder._id}`);
+doc.text(`Invoice #: INV-${savedOrder._id}`, 50, 120);
 doc.text(`Order ID: ${savedOrder._id}`);
 doc.text(`Date: ${new Date().toLocaleDateString()}`);
-doc.text(`Payment: ${payment}`);
-doc.text(`Status: ${order.orderStatus}`);
 
-doc.moveDown();
+doc.text(`Payment: ${payment}`, 350, 120);
+doc.text(`Status: ${order.orderStatus}`, 350, 135);
 
-doc.text("Billed To:");
+doc.text("Billed To:", 50, 170);
 doc.text(fullName);
-doc.text(email);
 doc.text(`${address}, ${city}, ${state} - ${pincode}`);
 
-doc.moveDown();
+const tableTop = 240;
 
-const table = {
-  headers: ["Item", "Qty", "Price", "Total"],
-  rows: productDetails.map((item) => [
-    item.name,
-    item.quantity,
-    ` Rs ${item.price}`,
-    `Rs ${item.total}`
-  ])
-};
+doc.moveTo(50, tableTop).lineTo(550, tableTop).stroke();
 
-let startY = doc.y;
+doc.text("Item", 50, tableTop + 5);
+doc.text("Qty", 250, tableTop + 5, { width: 40, align: "right" });
+doc.text("Price", 300, tableTop + 5, { width: 60, align: "right" });
+doc.text("CGST", 370, tableTop + 5, { width: 60, align: "right" });
+doc.text("SGST", 430, tableTop + 5, { width: 60, align: "right" });
+doc.text("Total", 500, tableTop + 5, { width: 60, align: "right" });
 
-const colWidths = [200, 80, 100, 100];
+doc.moveTo(50, tableTop + 20).lineTo(550, tableTop + 20).stroke();
 
-doc.font("Helvetica-Bold");
+let y = tableTop + 30;
+let subtotal = 0;
 
-table.headers.forEach((header, i) => {
-  doc.text(header, 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY);
-});
+productDetails.forEach((item) => {
+  const total = item.price * item.quantity;
+  const cgst = total * 0.09;
+  const sgst = total * 0.09;
 
-doc.moveDown();
-doc.font("Helvetica");
+  subtotal += total;
 
-let y = doc.y;
+  doc.text(item.name, 50, y, { width: 180 });
 
-table.rows.forEach((row) => {
-  row.forEach((cell, i) => {
-    doc.text(cell, 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y);
-  });
+  doc.text(item.quantity.toString(), 250, y, { width: 40, align: "right" });
+  doc.text(`Rs ${item.price.toFixed(2)}`, 300, y, { width: 60, align: "right" });
+  doc.text(`Rs ${cgst.toFixed(2)}`, 370, y, { width: 60, align: "right" });
+  doc.text(`Rs ${sgst.toFixed(2)}`, 430, y, { width: 60, align: "right" });
+  doc.text(`Rs ${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+
   y += 20;
 });
 
-doc.moveDown();
+doc.moveTo(50, y).lineTo(550, y).stroke();
 
-const gst = totalAmount * 0.18;
-const grandTotal = totalAmount + gst;
+const totalTax = subtotal * 0.18;
+const grandTotal = subtotal + totalTax;
 
-doc.text(`Subtotal: Rs ${totalAmount}`, { align: "right" });
-doc.text(`GST (18%): Rs ${gst.toFixed(2)}`, { align: "right" });
-doc.text(`Grand Total: Rs ${grandTotal.toFixed(2)}`, { align: "right" });
+y += 20;
 
-doc.moveDown();
+doc.text("Subtotal:", 350, y);
+doc.text(`Rs ${subtotal.toFixed(2)}`, 500, y, { width: 60, align: "right" });
 
-doc.text("Thank you for Shopping With Us!", { align: "center" });
+doc.text("GST (18%):", 350, y + 15);
+doc.text(`Rs ${totalTax.toFixed(2)}`, 500, y + 15, { width: 60, align: "right" });
+
+doc.text("Shipping:", 350, y + 30);
+doc.text("FREE", 500, y + 30, { width: 60, align: "right" });
+
+doc.text("Grand Total:", 350, y + 50);
+doc.text(` Rs ${grandTotal.toFixed(2)}`, 500, y + 50, { width: 60, align: "right" });
+
+doc.text("Thank you for shopping with us!", 50, 750, {
+  align: "center"
+});
+
+doc.on("end", async () => {
+  try {
+    const pdfBuffer = Buffer.concat(buffers);
+
+    await sendMail(
+      email,
+      "Invoice - Order Confirmation",
+      `<h3>Your order is confirmed</h3>
+       <p>Order ID: ${savedOrder._id}</p>
+       <p>Total: Rs ${grandTotal.toFixed(2)}</p>`,
+      pdfBuffer
+    );
+
+    console.log("Invoice mail sent");
+  } catch (err) {
+    console.log("Mail error:", err);
+  }
+});
 
 doc.end();
     res.json({
