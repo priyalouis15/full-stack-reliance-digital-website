@@ -196,7 +196,46 @@ app.post("/verify-payment", async (req, res) => {
 
 
 
+app.get("/admin/dashboard", async (req, res) => {
+  try {
 
+    const totalOrders = await Order.countDocuments();
+    const totalUsers = await UserModel.countDocuments();
+
+    const revenueData = await Order.aggregate([
+      { $match: { paymentStatus: "Completed" } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
+
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+    const salesByMonth = await Order.aggregate([
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.month": 1 } }
+    ]);
+
+    res.json({
+      totalOrders,
+      totalUsers,
+      totalRevenue,
+      salesByMonth
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Dashboard error" });
+  }
+});
 app.post("/order", async (req, res) => {
   try {
 
