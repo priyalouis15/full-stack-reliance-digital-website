@@ -160,7 +160,9 @@ app.post("/create-razorpay-order", async (req, res) => {
     res.status(500).json({ message: "Razorpay error" });
   }
 });
-
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
 app.post("/verify-payment", async (req, res) => {
   try {
     const {
@@ -195,25 +197,25 @@ app.post("/verify-payment", async (req, res) => {
 });
 
 
-
 app.get("/admin/dashboard", async (req, res) => {
   try {
 
+    const totalProducts = await ProductModel.countDocuments();
     const totalOrders = await Order.countDocuments();
     const totalUsers = await UserModel.countDocuments();
 
     const revenueData = await Order.aggregate([
-      { $match: { paymentStatus: "Completed" } },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$totalAmount" }
-        }
-      }
-    ]);
+  { $match: { paymentStatus: "Paid" } },
+  {
+    $group: {
+      _id: null,
+      total: { $sum: "$totalAmount" }
+    }
+  }
+]);
 
-    const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
-
+const totalRevenue =
+  revenueData.length > 0 ? revenueData[0].total : 0;
     const salesByMonth = await Order.aggregate([
       {
         $group: {
@@ -224,11 +226,17 @@ app.get("/admin/dashboard", async (req, res) => {
       { $sort: { "_id.month": 1 } }
     ]);
 
+    const recentOrders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+
     res.json({
+      totalProducts,
       totalOrders,
       totalUsers,
       totalRevenue,
-      salesByMonth
+      salesByMonth,
+      recentOrders
     });
 
   } catch (err) {
