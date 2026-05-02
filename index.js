@@ -92,14 +92,16 @@ app.get("/my-orders/:email", async (req, res) => {
 app.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
-const user = await UserModel.findOne({ email });
+
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-     console.log("DB OTP:", user.otp);
-     console.log("ENTERED OTP:", otp);
+    if (!user.otp) {
+      return res.status(400).json({ message: "OTP not generated" });
+    }
 
     if (user.otp.toString() !== otp.toString()) {
       return res.status(400).json({ message: "Invalid OTP" });
@@ -110,9 +112,8 @@ const user = await UserModel.findOne({ email });
     }
 
     user.otp = null;
-   
-   
     user.otpExpires = null;
+
     await user.save();
 
     res.json({ message: "Login successful" });
@@ -120,6 +121,17 @@ const user = await UserModel.findOne({ email });
   } catch (err) {
     console.log("VERIFY ERROR:", err);
     res.status(500).json({ message: "Verify error" });
+  }
+});
+app.get("/products/category/:name", async (req, res) => {
+  try {
+    const products = await ProductModel.find({
+      category: { $regex: req.params.name, $options: "i" }
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Error" });
   }
 });
 app.put("/update-payment/:id", async (req, res) => {
@@ -161,7 +173,7 @@ app.post("/create-razorpay-order", async (req, res) => {
   }
 });
 app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
+  res.send("Backend is running ");
 });
 app.post("/verify-payment", async (req, res) => {
   try {

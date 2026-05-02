@@ -19,5 +19,4 @@ const cartSchema = new mongoose.Schema({
 module.exports = mongoose.model("Cart", cartSchema);
 
 
-//USER PANEL ORDER DETAILS CREATE GST BILLS PDF MAIL USER
-//DEPLOYMENT= GITHUB PUSH RENDER CLOUDINARY ATLAS code change   code frontend backend atlas   
+   
