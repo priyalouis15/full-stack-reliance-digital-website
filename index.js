@@ -66,6 +66,8 @@ app.post("/login", async (req, res) => {
     await user.save();
 
     console.log("OTP Sent:", otp);
+    console.log("LOGIN HIT");
+console.log("OTP:", otp);
 
     await sendMail(
       email,
@@ -129,7 +131,7 @@ app.post("/verify-otp", async (req, res) => {
 app.get("/products/category/:name", async (req, res) => {
   try {
     const products = await ProductModel.find({
-      category: { $regex: req.params.name, $options: "i" }
+      category: req.params.name
     });
 
     res.json(products);
@@ -316,9 +318,13 @@ const doc = new PDFDocument({ size: "A4", margin: 50 });
 let buffers = [];
 doc.on("data", (chunk) => buffers.push(chunk));
 
-doc.fontSize(16).text("Reliance Digital", 50, 50);
-doc.fontSize(10).text("Mangalore, Karnataka, India");
-doc.text("Email: RelianceDigital@gmail.com");
+const logoPath = path.join(__dirname, "assets", "reliancelogo.jpg");
+
+doc.image(logoPath, 50, 40, { width: 80 });
+
+doc.fontSize(16).text("Reliance Digital", 150, 50);
+doc.fontSize(10).text("Mangalore, Karnataka, India", 150, 70);
+doc.text("Email: RelianceDigital@gmail.com", 150, 85);
 
 doc.fontSize(14).text("TAX INVOICE", 400, 50);
 
@@ -414,9 +420,10 @@ doc.on("end", async () => {
 });
 
 doc.end();
-    res.json({
-      orderId: savedOrder._id
-    });
+
+res.json({
+  orderId: savedOrder._id
+});
 
   } catch (err) {
     console.log("ORDER ERROR:", err);
