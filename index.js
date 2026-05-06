@@ -46,35 +46,37 @@ function generateOTP() {
 app.post("/login", async (req, res) => {
   try {
     const { email } = req.body;
+
     let user = await UserModel.findOne({ email });
 
-    const otp = generateOTP();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
     if (!user) {
-      user = await UserModel.create({
+      user = new UserModel({
         email,
         otp,
         otpExpires
       });
-
-      } else {
+    } else {
       user.otp = otp;
       user.otpExpires = otpExpires;
-      await user.save();
     }
 
-    console.log("OTP Sent:", otp); 
+    await user.save();
 
-       await sendMail(
+    console.log("OTP Sent:", otp);
+
+    await sendMail(
       email,
       "Your OTP",
       `<h2>${otp}</h2><p>Valid for 5 minutes</p>`
     );
+
     res.json({ message: "OTP sent" });
 
   } catch (err) {
-    console.log("Login ERROR:", err);
+    console.log("LOGIN ERROR:", err);
     res.status(500).json({ message: "Login error" });
   }
 });
@@ -111,10 +113,11 @@ app.post("/verify-otp", async (req, res) => {
       return res.status(400).json({ message: "OTP expired" });
     }
 
-    user.otp = null;
-    user.otpExpires = null;
+
 
     await user.save();
+
+    console.log("OTP STORED:", user.otp);
 
     res.json({ message: "Login successful" });
 
