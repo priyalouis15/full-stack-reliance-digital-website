@@ -480,8 +480,9 @@ doc.on("end", async () => {
 
   await sendMail(
     email,
+    
     "GST Invoice",
-    `
+    `<h3>Order Placed Successfully</h3>
       <h3>Your Order Invoice</h3>
       <p>Order ID: ${savedOrder._id}</p>
       <p>Total: Rs ${grandTotal.toFixed(2)}</p>
