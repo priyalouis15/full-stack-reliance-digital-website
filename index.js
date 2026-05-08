@@ -491,8 +491,9 @@ doc.on("end", async () => {
 });
 
 doc.end();
-
 res.json({
+  success: true,
+  message: "Order placed successfully ",
   orderId: savedOrder._id
 });
 
