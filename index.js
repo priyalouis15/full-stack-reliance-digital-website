@@ -313,108 +313,179 @@ app.post("/order", async (req, res) => {
     });
 
     const savedOrder = await order.save();
-const doc = new PDFDocument({ size: "A4", margin: 50 });
+const path = require("path");
+
+const doc = new PDFDocument({
+  size: "A4",
+  margin: 50
+});
 
 let buffers = [];
+
 doc.on("data", (chunk) => buffers.push(chunk));
 
 const logoPath = path.join(__dirname, "assets", "reliancelogo.jpg");
 
-doc.image(logoPath, 50, 40, { width: 80 });
 
-doc.fontSize(16).text("Reliance Digital", 150, 50);
-doc.fontSize(10).text("Mangalore, Karnataka, India", 150, 70);
-doc.text("Email: RelianceDigital@gmail.com", 150, 85);
+doc.image(logoPath, 50, 35, {
+  width: 80
+});
 
-doc.fontSize(14).text("TAX INVOICE", 400, 50);
 
-doc.moveDown(3);
+doc
+  .fontSize(18)
+  .fillColor("#000")
+  .text("Reliance Digital", 150, 45);
 
-doc.fontSize(10);
-doc.text(`Invoice #: INV-${savedOrder._id}`, 50, 120);
-doc.text(`Order ID: ${savedOrder._id}`);
-doc.text(`Date: ${new Date().toLocaleDateString()}`);
+doc
+  .fontSize(10)
+  .fillColor("gray")
+  .text("Mangalore, Karnataka, India", 150, 68);
 
-doc.text(`Payment: ${payment}`, 350, 120);
-doc.text(`Status: ${order.orderStatus}`, 350, 135);
+doc
+  .text("Email: RelianceDigital@gmail.com", 150, 82);
 
-doc.text("Billed To:", 50, 170);
-doc.text(fullName);
-doc.text(`${address}, ${city}, ${state} - ${pincode}`);
 
-const tableTop = 240;
+doc
+  .fontSize(16)
+  .fillColor("#000")
+  .text("OFFICIAL RECEIPT", 400, 50);
 
-doc.moveTo(50, tableTop).lineTo(550, tableTop).stroke();
 
-doc.text("Item", 50, tableTop + 5);
-doc.text("Qty", 200, tableTop + 5, { width: 40, align: "right" });
-doc.text("Price", 250, tableTop + 5, { width: 60, align: "right" });
-doc.text("Base", 320, tableTop + 5, { width: 60, align: "right" });
-doc.text("CGST", 380, tableTop + 5, { width: 60, align: "right" });
-doc.text("SGST", 440, tableTop + 5, { width: 60, align: "right" });
-doc.text("Total", 500, tableTop + 5, { width: 60, align: "right" });
+doc
+  .moveTo(50, 115)
+  .lineTo(550, 115)
+  .strokeColor("#ccc")
+  .stroke();
 
-doc.moveTo(50, tableTop + 20).lineTo(550, tableTop + 20).stroke();
 
-let y = tableTop + 30;
-let taxableSubtotal = 0;
+doc.fontSize(10).fillColor("#000");
+
+doc.text(`Invoice #: INV-${savedOrder._id}`, 50, 130);
+doc.text(`Order ID: ${savedOrder._id}`, 50, 145);
+doc.text(`Date: ${new Date().toLocaleDateString()}`, 50, 160);
+
+doc.text(`Payment: ${payment}`, 350, 130);
+doc.text(`Status: ${order.orderStatus}`, 350, 145);
+doc.text(`Shipping: FREE`, 350, 160);
+
+doc
+  .fontSize(12)
+  .text("Billed To:", 50, 200);
+
+doc
+  .fontSize(10)
+  .text(fullName, 50, 220);
+
+doc.text(address, 50, 235);
+
+doc.text(`${city}, ${state} - ${pincode}`, 50, 250);
+
+const tableTop = 300;
+
+doc
+  .rect(50, tableTop, 500, 25)
+  .fill("#f2f2f2");
+
+doc.fillColor("#000");
+
+doc.text("Item", 60, tableTop + 8);
+
+doc.text("Qty", 220, tableTop + 8);
+
+doc.text("Price", 280, tableTop + 8);
+
+doc.text("CGST", 360, tableTop + 8);
+
+doc.text("SGST", 430, tableTop + 8);
+
+doc.text("Total", 500, tableTop + 8);
+
+
+let y = tableTop + 40;
+
+let subtotal = 0;
 let totalGST = 0;
 
 productDetails.forEach((item) => {
+
   const total = item.price * item.quantity;
 
-  const base = total / 1.18;
-  const gst = total - base;
+  const gst = total * 0.18;
 
   const cgst = gst / 2;
+
   const sgst = gst / 2;
 
-  taxableSubtotal += base;
+  subtotal += total;
+
   totalGST += gst;
 
-  doc.text(item.name, 50, y, { width: 140 });
+  doc.text(item.name, 60, y);
 
-  doc.text(item.quantity.toString(), 200, y, { width: 40, align: "right" });
-  doc.text(`Rs ${item.price.toFixed(2)}`, 250, y, { width: 60, align: "right" });
-  doc.text(`${base.toFixed(2)}`, 320, y, { width: 60, align: "right" });
-  doc.text(`${cgst.toFixed(2)}`, 380, y, { width: 60, align: "right" });
-  doc.text(`${sgst.toFixed(2)}`, 440, y, { width: 60, align: "right" });
-  doc.text(`Rs ${total.toFixed(2)}`, 500, y, { width: 60, align: "right" });
+  doc.text(item.quantity.toString(), 220, y);
 
-  y += 25;
+  doc.text(`Rs ${item.price.toFixed(2)}`, 270, y);
+
+  doc.text(`Rs ${cgst.toFixed(2)}`, 350, y);
+
+  doc.text(`Rs ${sgst.toFixed(2)}`, 420, y);
+
+  doc.text(`Rs ${total.toFixed(2)}`, 490, y);
+
+  y += 28;
 });
 
-doc.moveTo(50, y).lineTo(550, y).stroke();
 
-y += 20;
+doc
+  .moveTo(50, y)
+  .lineTo(550, y)
+  .strokeColor("#ccc")
+  .stroke();
 
-const grandTotal = taxableSubtotal + totalGST;
+y += 25;
 
-doc.text("Taxable Subtotal:", 350, y);
-doc.text(`${taxableSubtotal.toFixed(2)}`, 500, y, { align: "right" });
 
-doc.text("Total GST (18%):", 350, y + 15);
-doc.text(`${totalGST.toFixed(2)}`, 500, y + 15, { align: "right" });
+const grandTotal = subtotal + totalGST;
 
-doc.text("Shipping:", 350, y + 30);
-doc.text("FREE", 500, y + 30, { align: "right" });
+doc.fontSize(11).fillColor("#000");
 
-doc.text("Grand Total:", 350, y + 50);
-doc.text(`Rs ${grandTotal.toFixed(2)}`, 500, y + 50, { align: "right" });
+doc.text(`Subtotal: Rs ${subtotal.toFixed(2)}`, 350, y);
 
-doc.text("Thank you for shopping with us!", 50, 750, {
-  align: "center"
-});
+doc.text(`GST (18%): Rs ${totalGST.toFixed(2)}`, 350, y + 20);
+
+doc.text(`Shipping: FREE`, 350, y + 40);
+
+doc
+  .fontSize(13)
+  .text(`Grand Total: Rs ${grandTotal.toFixed(2)}`, 350, y + 70);
+
+
+doc
+  .fontSize(11)
+  .fillColor("gray")
+  .text(
+    "Thank you for shopping with Reliance Digital!",
+    50,
+    750,
+    {
+      align: "center"
+    }
+  );
+
 
 doc.on("end", async () => {
+
   const pdfBuffer = Buffer.concat(buffers);
 
   await sendMail(
     email,
     "GST Invoice",
-    `<h3>Your order invoice</h3>
-     <p>Order ID: ${savedOrder._id}</p>
-     <p>Total: Rs ${grandTotal.toFixed(2)}</p>`,
+    `
+      <h3>Your Order Invoice</h3>
+      <p>Order ID: ${savedOrder._id}</p>
+      <p>Total: Rs ${grandTotal.toFixed(2)}</p>
+    `,
     pdfBuffer
   );
 });
