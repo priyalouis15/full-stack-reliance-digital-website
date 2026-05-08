@@ -670,25 +670,19 @@ app.post("/cart", async (req, res) => {
 
     console.log("Adding Product:", productId);
     let cart = await CartModel.findOne();
-
     if (!cart) {
       cart = new CartModel({ items: [] });
     }
-
     const index = cart.items.findIndex(
       item => item.productId.toString() === productId
     );
-
     if (index !== -1) {
     cart.items[index].quantity += 1;
     } else {
       cart.items.push({ productId, quantity: 1 });
     }
-
     await cart.save();
-
     console.log("UPDATED CART:", cart);
-
     res.json(cart);
 
   } catch (error) {
@@ -736,6 +730,75 @@ app.delete("/cart/:productId", async (req, res) => {
   } catch (err) {
    
     res.status(500).json({ message: "Delete failed" });
+  }
+});
+app.put("/cart/:productId", async (req, res) => {
+
+  try {
+
+    const { action } = req.body;
+
+    const productId = req.params.productId;
+
+    let cart = await CartModel.findOne();
+
+    if (!cart) {
+
+      return res.status(404).json({
+        message: "Cart not found"
+      });
+
+    }
+
+    const itemIndex = cart.items.findIndex(
+      item => item.productId.toString() === productId
+    );
+
+    if (itemIndex === -1) {
+
+      return res.status(404).json({
+        message: "Item not found"
+      });
+
+    }
+
+  
+    if (action === "increase") {
+
+      cart.items[itemIndex].quantity += 1;
+
+    }
+
+   
+    if (action === "decrease") {
+
+      if (cart.items[itemIndex].quantity > 1) {
+
+        cart.items[itemIndex].quantity -= 1;
+
+      } else {
+
+      
+        cart.items.splice(itemIndex, 1);
+
+      }
+    }
+
+    await cart.save();
+
+    res.json({
+      success: true,
+      cart
+    });
+
+  } catch (error) {
+
+    console.log("UPDATE CART ERROR:", error);
+
+    res.status(500).json({
+      message: "Server Error"
+    });
+
   }
 });
 
